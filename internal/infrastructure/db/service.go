@@ -210,7 +210,7 @@ func NewService(config ServiceConfig, txDecoder ports.TxDecoder) (ports.RepoMana
 		if err != nil {
 			return nil, fmt.Errorf("failed to create conviction store: %w", err)
 		}
-		assetStoreConfig := append(config.DataStoreConfig, arkStore)
+		assetStoreConfig := append(config.DataStoreConfig, vtxoStore)
 		assetStore, err = assetStoreFactory(assetStoreConfig...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create asset store: %w", err)
@@ -283,7 +283,7 @@ func NewService(config ServiceConfig, txDecoder ports.TxDecoder) (ports.RepoMana
 			return nil, fmt.Errorf("invalid connection config flags for postgres")
 		}
 
-		db, err := pgdb.OpenDb(dsn, !autoCreate, pgdb.WithConnectionConfig(connectionCfg))
+		db, err := pgdb.OpenDb(dsn, autoCreate, pgdb.WithConnectionConfig(connectionCfg))
 		if err != nil {
 			return nil, fmt.Errorf("failed to open postgres db: %s", err)
 		}
@@ -399,7 +399,7 @@ func NewService(config ServiceConfig, txDecoder ports.TxDecoder) (ports.RepoMana
 			return nil, fmt.Errorf("failed to handle vtxo markers migration: %w", err)
 		}
 
-		if err := m.Up(); err != nil {
+		if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 			return nil, fmt.Errorf("failed to run migrations: %s", err)
 		}
 
@@ -454,7 +454,7 @@ func NewService(config ServiceConfig, txDecoder ports.TxDecoder) (ports.RepoMana
 	}
 
 	// Register handlers that take care of keeping the projection store up-to-date.
-	if txDecoder == nil {
+	if txDecoder != nil {
 		eventStore.RegisterEventsHandler(domain.RoundTopic, svc.updateProjectionsAfterRoundEvents)
 		eventStore.RegisterEventsHandler(
 			domain.OffchainTxTopic, svc.updateProjectionsAfterOffchainTxEvents,
